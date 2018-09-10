@@ -45,31 +45,31 @@ class BytesOrder(object):
 
 class BytesBuffer(BytesIO):
     """封装BytesIO,增加重置"""
-    _length = 0
-    _count = 0
+    __length = 0
+    __count = 0
 
     def __len__(self):
         """获取长度，使用切片而不复制数据,同时增加计算缓存"""
-        if self._length == 0:
-            self._length = len(self.getbuffer())
-        return self._length
+        if self.__length == 0:
+            self.__length = len(self.getbuffer())
+        return self.__length
 
     def clear(self):
         """清理缓存区然后重置索引,seek必须调用"""
         self.truncate(0)
         self.seek(0)
-        self._length = 0
-        self._count = 0
+        self.__length = 0
+        self.__count = 0
 
     def write(self, *args, **kwargs):
-        self._length = 0
-        self._count += 1
+        self.__length = 0
+        self.__count += 1
         return super().write(*args, **kwargs)
 
     def writelines(self, *args, **kwargs):
-        self._length = 0
-        self._count += 1
+        self.__length = 0
+        self.__count += 1
         return super().writelines(*args, **kwargs)
 
     def count(self):
-        return self._count
+        return self.__count
