@@ -11,4 +11,8 @@ soundio
 -
 python通过ctypes封装开源音频引擎libsoundio,并全面的分析了ctypes调用的中的各种坑，填坑内容见[python通过ctypes混合调用c/c++封装开源音频引擎libsoundio](https://blog.csdn.net/mak0000/article/details/82227515) 
 
-<img src="https://github.com/mengdj/python/raw/master/paypal.png" width="50%"/>
+码云
+-
+同步更新 https://gitee.com/mengdj/python
+
+<img src="https://github.com/mengdj/python/raw/master/paypal.png" width="50%">
