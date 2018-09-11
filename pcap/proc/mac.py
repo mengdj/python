@@ -25,19 +25,31 @@ class MAC(ProcData):
         self._data = data[14:]
 
     def __str__(self):
-        return "dst=>%s src=>%s type:%s" % (self.dst, self.src, self.type)
+        return "dst=>%s src=>%s type:%s" % (self.dst_desc, self.src_desc, self.type_desc)
 
     @property
-    def dst(self):
+    def dst_desc(self):
         return [hex(s).replace("0x", "").upper() for s in self._dst]
 
     @property
-    def src(self):
+    def src_desc(self):
         return [hex(s).replace("0x", "").upper() for s in self._src]
 
     @property
-    def type(self):
+    def type_desc(self):
         return [hex(i) for i in self._type]
+
+    @property
+    def dst(self):
+        return self._dst
+
+    @property
+    def src(self):
+        return self._src
+
+    @property
+    def type(self):
+        return self._type
 
     @property
     def data(self):

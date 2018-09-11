@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from proc.util import BytesOrder, BytesBuffer, ProcData
-import copy
+from proc.util import BytesOrder, ProcData, BytesBuffer
 
 
 class Flag(object):
@@ -83,7 +82,6 @@ class TCP(ProcData):
             self._option = data[20:self.header_len]
         self._data = data[self.header_len:]
 
-
     def __str__(self):
         return "TCP src port:%d dst:%d seq:%d ack:%d header_len:%d " \
                "flag:%s win:%d check_sum:%s urqt_p:%d option:%d payload:%d" % (
@@ -98,7 +96,7 @@ class TCP(ProcData):
 
     @property
     def option(self):
-        """分析tcp的可选项字段(分析了常用)"""
+        """分析tcp的可选项字段(分析了常用字段)"""
         size = len(self._option)
         ret = []
         if size > 0:
@@ -140,6 +138,7 @@ class TCP(ProcData):
 
     @property
     def flag(self):
+        """获取标志对象"""
         if self._flag is None:
             self._flag = Flag(self._reserved_flag)
         return self._flag
@@ -154,30 +153,35 @@ class TCP(ProcData):
 
     @property
     def seq(self):
+        """获取序列号"""
         return BytesOrder.bytes2int(self._seq_no, "big")
 
     @property
     def ack(self):
+        """获取确认号"""
         return BytesOrder.bytes2int(self._ack_no, "big")
 
     @property
     def header_len(self):
+        """获取头部长度"""
         return (self._header_len_reserved >> 4) << 2
 
     @property
     def wnd_size(self):
+        """获取滑动窗口大小"""
         return BytesOrder.bytes2int(self._wnd_size, "big")
 
     @property
     def check_sum(self):
+        """获取校验"""
         return self._check_sum
 
     @property
     def urqt_p(self):
+        """获取紧急指针"""
         return BytesOrder.bytes2int(self._urqt_p, "big")
-
 
     @property
     def data(self):
-        """获取原始包(可能包含分段数据)"""
+        """获取原始包(可能包含分段数据，此数据未进行重组)"""
         return self._data

@@ -102,6 +102,7 @@ class IP(ProcData):
 
     @property
     def id(self):
+        """IP序号"""
         return BytesOrder.bytes2int(self._id, "big")
 
     @property
@@ -114,10 +115,12 @@ class IP(ProcData):
 
     @property
     def head_len_byte(self):
+        """头部字节数"""
         return self.head_len << 2
 
     @property
     def data(self):
+        """获取传输层协议"""
         ret = None
         # 46~1500 检测是否有填充数据(既数据部分不满足46字节会填充，传递时候要过滤掉这部分数据)
         # tcp自身有分包机制，不用处理分包，其他协议需要处理分包

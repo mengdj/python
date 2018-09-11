@@ -13,17 +13,10 @@ class ProcData(object):
         """返回上层数据，未处理分片"""
         pass
 
-    @property
-    def raw_data(self):
-        """返回上层数据，已处理完分片，源数据"""
-        pass
-
-    def find(self, data):
-        """适配实现的应用层协议"""
-        pass
-
 
 class AppProcData(object):
+    """此接口由应用层来实现"""
+
     def __init__(self):
         pass
 
@@ -45,7 +38,9 @@ class BytesOrder(object):
 
 class BytesBuffer(BytesIO):
     """封装BytesIO,增加重置"""
+    # 写入长度缓存
     __length = 0
+    # 统计写入次数
     __count = 0
 
     def __len__(self):
@@ -64,12 +59,12 @@ class BytesBuffer(BytesIO):
     def write(self, *args, **kwargs):
         self.__length = 0
         self.__count += 1
-        return super().write(*args, **kwargs)
+        return super(BytesBuffer, self).write(*args, **kwargs)
 
     def writelines(self, *args, **kwargs):
         self.__length = 0
         self.__count += 1
-        return super().writelines(*args, **kwargs)
+        return super(BytesBuffer, self).writelines(*args, **kwargs)
 
     def count(self):
         return self.__count
