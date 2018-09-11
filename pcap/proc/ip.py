@@ -69,7 +69,7 @@ class IP(ProcData):
 
     def __str__(self):
         return (
-                "IPv%d src:%s dst:%s header length:%d service:%s total length:%d id:%d flag:%s "
+                "IPv%d src:%s dst:%s len(header):%d service:%s len(total):%d id:%d flag:%s "
                 "time to live:%d protocol:%d check sum:%s payload:%d" %
                 (
                     self.version, self.src, self.dst, self.head_len_byte, bin(self._service_set), self.total_len,

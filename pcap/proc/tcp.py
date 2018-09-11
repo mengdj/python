@@ -83,7 +83,7 @@ class TCP(ProcData):
         self._data = data[self.header_len:]
 
     def __str__(self):
-        return "TCP src port:%d dst:%d seq:%d ack:%d header_len:%d " \
+        return "TCP src(port):%d dst(port):%d seq:%d ack:%d len(header):%d " \
                "flag:%s win:%d check_sum:%s urqt_p:%d option:%d payload:%d" % (
                    self.src, self.dst, self.seq, self.ack, self.header_len, self.flag, self.wnd_size,
                    self.check_sum, self.urqt_p,

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
+from proc.util import BytesBuffer
+from proc.util import BytesOrder
+
 import packet
-from proc.util import BytesOrder, BytesBuffer
 
 
 class PcapHead(object):
@@ -46,20 +48,21 @@ class PcapHead(object):
 
 
 class Pcap(object):
-    _head = None
-    _packets = []
+    """.pcap解析类"""
+    __head = None
+    __ret = 0
 
     def parse(self, file, buffSize=2048):
         """
-        解析pcap文件
+        解析pcap文件,返回值为一个生成器 yield
         :param file:缓冲文件大小
         :param buffSize:
-        :return:
+        :return:返回一个生成器（用于处理大包）
         """
-        ret = 0
         assert file != ""
         _buff = BytesBuffer()
         _packet = None
+        ret = 0
         with open(file, "rb") as o:
             ctx = None
             while 1:
@@ -76,50 +79,45 @@ class Pcap(object):
                     ctx = o.read(buffSize)
                 size = len(ctx)
                 if size > 0:
-                    if self._head is None:
+                    if self.__head is None:
                         # 文件头占24字节
                         if size >= 24:
-                            self._head = PcapHead(ctx[:24])
+                            self.__head = PcapHead(ctx[:24])
                             size -= 24
                             ctx = ctx[24:]
                         else:
                             _buff.write(ctx)
-                            continue
                     # 分析包头(包头占16字节)
                     if size > 16:
                         if _packet is None:
                             _packet = packet.Packet()
                             ctx, size = _packet.parse(ctx)
                             if _packet.finish():
-                                self._packets.append(_packet)
+                                yield _packet
                                 ret += 1
                                 _packet = None
                             if size > 0:
                                 _buff.write(ctx)
-                                continue
                         else:
                             ctx, size = _packet.parse(ctx)
                             if _packet.finish():
-                                self._packets.append(_packet)
+                                yield _packet
                                 ret += 1
                                 _packet = None
                             if size > 0:
                                 _buff.write(ctx)
-                                continue
                     else:
                         _buff.write(ctx)
-                        continue
                 else:
                     break
+            del ctx
         del _buff
-        return ret
+        self.__ret = ret
 
-    @property
-    def packets(self):
-        """获取所有数据包"""
-        return self._packets
+    def __len__(self):
+        return self.__ret
 
     @property
     def head(self):
-        """获取包头"""
-        return self._head
+        """获取包头,务必保证有调用parse后才能获得包头"""
+        return self.__head
