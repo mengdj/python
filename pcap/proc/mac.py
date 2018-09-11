@@ -25,7 +25,7 @@ class MAC(ProcData):
         self._data = data[14:]
 
     def __str__(self):
-        return "dst=>%s src=>%s type:%s" % (self.dst_desc, self.src_desc, self.type_desc)
+        return "MAC dst=>%s src=>%s type:%s" % (self.dst_desc, self.src_desc, self.type_desc)
 
     @property
     def dst_desc(self):

@@ -35,7 +35,7 @@ class PacketHead(object):
         return self._orig_len
 
     def __str__(self):
-        return "sec:%d usec:%d incl len:%d orig len:%d" % (
+        return "PACKET sec:%d usec:%d incl len:%d orig len:%d" % (
             self._ts_sec, self._ts_usec, self._incl_len, self._incl_len)
 
 
