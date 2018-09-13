@@ -13,8 +13,8 @@ class UDP(ProcData):
     _check_sum = 0
     _data = None
 
-    def __init__(self, data):
-        super(ProcData, self).__init__()
+    def __init__(self, data, upper):
+        super(UDP, self).__init__(upper)
         self._src = data[:2]
         self._dst = data[2:4]
         self._header_len = data[4:6]

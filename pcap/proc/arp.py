@@ -19,8 +19,8 @@ class ARP(ProcData):
     _crc = None
     _data = []
 
-    def __init__(self, data):
-        super(ProcData, self).__init__()
+    def __init__(self, data, upper):
+        super(ARP, self).__init__(upper)
         self._hardware = data[0:2]
         self._protocol = data[2:4]
         self._hardware_len = data[4]

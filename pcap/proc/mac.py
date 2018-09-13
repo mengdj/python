@@ -14,8 +14,8 @@ class MAC(ProcData):
     _type = None
     _data = None
 
-    def __init__(self, data):
-        super(ProcData, self).__init__()
+    def __init__(self, data, upper):
+        super(MAC, self).__init__(upper)
         size = len(data)
         assert size > 18
         self._dst = data[:6]
@@ -57,12 +57,12 @@ class MAC(ProcData):
         if self._type[0] == 0x08:
             if self._type[1] == 0x00:
                 # ipv4 0x0800
-                ret = IP(self._data)
+                ret = IP(self._data, self)
             elif self._type[1] == 0x06:
                 # arp 0x0806
-                ret = ARP(self._data)
+                ret = ARP(self._data, self)
         elif self._type[0] == 0x86:
             if self._type[1] == 0xdd:
                 # ipv6 0x86dd
-                ret = IPV6(self._data)
+                ret = IPV6(self._data, self)
         return ret

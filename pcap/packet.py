@@ -84,7 +84,7 @@ class Packet(ProcData):
 
     @property
     def data(self):
-        return MAC(self._buff.getvalue())
+        return MAC(self._buff.getvalue(),None)
 
     def finish(self):
         return len(self._buff) == self._head.incl

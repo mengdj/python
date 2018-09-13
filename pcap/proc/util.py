@@ -5,13 +5,19 @@ from io import BytesIO
 
 
 class ProcData(object):
-    def __init__(self):
-        pass
+    __upper = 0
+
+    def __init__(self, upper=None):
+        self.__upper = upper
 
     @property
     def data(self):
         """返回上层数据，未处理分片"""
         pass
+
+    @property
+    def upper(self):
+        return self.__upper
 
 
 class AppProcData(object):

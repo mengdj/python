@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
+import packet
 from proc.util import BytesBuffer
 from proc.util import BytesOrder
-
-import packet
 
 
 class PcapHead(object):

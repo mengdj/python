@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from proc.util import BytesOrder, ProcData, BytesBuffer
+from proc.util import BytesOrder, ProcData
 
 
 class Flag(object):
@@ -64,8 +64,8 @@ class TCP(ProcData):
     _flag = None
     _data = []
 
-    def __init__(self, data):
-        super(ProcData, self).__init__()
+    def __init__(self, data, upper):
+        super(TCP, self).__init__(upper)
         self._src = data[:2]
         self._dst = data[2:4]
         self._seq_no = data[4:8]
@@ -89,6 +89,9 @@ class TCP(ProcData):
                    self.check_sum, self.urqt_p,
                    len(self._option),
                    len(self._data))
+
+    def __len__(self):
+        return len(self._data)
 
     @property
     def src(self):

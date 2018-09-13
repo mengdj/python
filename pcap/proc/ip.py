@@ -52,8 +52,8 @@ class IP(ProcData):
     _data = None
     _flag = None
 
-    def __init__(self, data):
-        super(ProcData, self).__init__()
+    def __init__(self, data, upper):
+        super(IP, self).__init__(upper)
         # 版本和长度各占4位，一共1个字节
         self._header_version_len = data[0]
         self._service_set = data[1]
@@ -126,7 +126,7 @@ class IP(ProcData):
         # tcp自身有分包机制，不用处理分包，其他协议需要处理分包
         data = self._data[:self.total_len - 20]
         if self._protocol == 0x06:
-            ret = TCP(data)
+            ret = TCP(data, self)
         elif self._protocol == 0x11:
-            ret = UDP(data)
+            ret = UDP(data, self)
         return ret
