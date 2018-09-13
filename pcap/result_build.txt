@@ -1,5 +1,3 @@
-D:\Python\Python37-32\python.exe C:/Users/usitrip/Documents/GitHub/python/pcap/pcap_test.py
-192:168:0:124 5151|14:215:103:16 80
 TCP src(port):5151 dst(port):80 seq:1425820040 ack:1027171231 len(header):20 flag:(CWR:0 ECE:0 URG:0 ACK:1 PSH:0 RST:0 SYN:0 FIN:0) win:65335 check_sum:b'7&' urqt_p:0 option:0 payload:0
 TCP src(port):5151 dst(port):80 seq:1425820040 ack:1028440765 len(header):20 flag:(CWR:0 ECE:0 URG:0 ACK:1 PSH:0 RST:0 SYN:0 FIN:0) win:55480 check_sum:b'7&' urqt_p:0 option:0 payload:0
 TCP src(port):5151 dst(port):80 seq:1425820040 ack:1028438437 len(header):20 flag:(CWR:0 ECE:0 URG:0 ACK:1 PSH:0 RST:0 SYN:0 FIN:0) win:55312 check_sum:b'7&' urqt_p:0 option:0 payload:0
