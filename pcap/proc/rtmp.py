@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from proc.util import AppProcData, BytesBuffer
+from .util import AppProcData, BytesBuffer
 
 RTMP_VERSION = 0x03
 

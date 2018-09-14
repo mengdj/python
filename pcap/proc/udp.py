@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from proc.util import BytesOrder, ProcData
+from .util import BytesOrder, ProcData
 
 
 class UDP(ProcData):

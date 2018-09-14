@@ -3,7 +3,7 @@
 __author__ = "mengdj@outlook.com"
 import unittest
 
-import pcap
+from . import pcap
 
 
 def callback_tcp():
@@ -13,7 +13,7 @@ def callback_tcp():
 class PacketTest(unittest.TestCase):
     def test_parse(self):
         p = pcap.Pcap()
-        it = p.parse("data/3.pcap")
+        it = p.parse("/home/mengdj/work/git/python/pcap/data/1.pcap")
         for i in it:
             print("")
             mac = i.data
