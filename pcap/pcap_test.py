@@ -16,7 +16,7 @@ class PcapTest(unittest.TestCase):
 
     def test_load(self):
         _pcap = Pcap()
-        _gen = _pcap.parse("data/1.pcap")
+        _gen = _pcap.parse("/home/mengdj/work/git/python/pcap/data/1.pcap")
         for _packet in _gen:
             _mac = _packet.data
             _net = _mac.data
