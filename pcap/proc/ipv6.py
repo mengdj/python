@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from .util import ProcData
+from pcap.proc.util import ProcData
 
 
 class IPV6(ProcData):

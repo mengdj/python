@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from .arp import ARP
-from .ip import IP
-from .ipv6 import IPV6
-from .util import ProcData
+from pcap.proc.arp import ARP
+from pcap.proc.ip import IP
+from pcap.proc.ipv6 import IPV6
+from pcap.proc.util import ProcData
 
 
 class MAC(ProcData):

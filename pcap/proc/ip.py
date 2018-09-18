@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from .tcp import TCP
-from .udp import UDP
-from .util import BytesOrder, ProcData
+from pcap.proc.tcp import TCP
+from pcap.proc.udp import UDP
+from pcap.proc.util import BytesOrder, ProcData
 
 
 class Services(object):

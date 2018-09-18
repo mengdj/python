@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from .proc.mac import MAC
-from .proc.util import BytesBuffer, BytesOrder, ProcData
+from pcap.proc.mac import MAC
+from pcap.proc.util import BytesBuffer, BytesOrder, ProcData
 
 
 class PacketHead(object):

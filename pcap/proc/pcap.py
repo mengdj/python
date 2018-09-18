@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
-from . import packet
-from .proc.util import BytesBuffer
-from .proc.util import BytesOrder
+from pcap.proc.packet import Packet
+from pcap.proc.util import BytesBuffer
+from pcap.proc.util import BytesOrder
 
 
 class PcapHead(object):
@@ -89,7 +89,7 @@ class Pcap(object):
                     # 分析包头(包头占16字节)
                     if size > 16:
                         if _packet is None:
-                            _packet = packet.Packet()
+                            _packet = Packet()
                             ctx, size = _packet.parse(ctx)
                             if _packet.finish():
                                 yield _packet
