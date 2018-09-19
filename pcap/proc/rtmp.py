@@ -10,6 +10,17 @@ RTMP_VERSION = 0x03
 RTMP_PORT = 1935
 
 
+class RTMP_c1s1(_CData):
+    __hdr__ = (
+        ('time', 'I', 0),
+        ('zero', 'I', 0),
+        ('random', '1528B', 0)
+    )
+
+    def __init__(self, data):
+        self.unpack(data)
+
+
 class RTMP_Chunk_Basic_Head(_CData):
     __hdr__ = (
         ('fmt', 'I', 0),
@@ -80,8 +91,12 @@ class RTMP(AppProcData):
         self.__fn = fn
 
     @property
-    def info(self):
-        pass
+    def c1(self):
+        return RTMP_c1s1(self._c1.getvalue())
+
+    @property
+    def s1(self):
+        return RTMP_c1s1(self._s1.getvalue())
 
     def _process(self, data, fr=0):
         """
