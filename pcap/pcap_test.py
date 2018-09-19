@@ -8,15 +8,20 @@ from pcap.proc.rtmp import RTMP
 
 
 def callback_rtmp(ins, msg, fr):
-    print(msg)
+    if msg.__class__.__name__ == "str":
+        print(msg)
 
 
 class PcapTest(unittest.TestCase):
     """测试"""
 
+    def test_rtmp(self):
+        t = 3
+        print("tt:%s" % bin(t >> 6))
+
     def test_load(self):
         _pcap = Pcap()
-        _gen = _pcap.parse("/home/mengdj/work/git/python/pcap/data/1.pcap")
+        _gen = _pcap.parse("data/1.pcap")
         for _packet in _gen:
             _mac = _packet.data
             _net = _mac.data
@@ -24,13 +29,18 @@ class PcapTest(unittest.TestCase):
             if _trans.__class__.__name__ == "TCP":
                 # 打印tcp的选项数据
                 # print(_trans.option)
+
                 _app = _trans.data
+                if _packet.head.usec==525657:
+                    print([hex(i) for i in _app])
+
                 if _app is not None:
                     if RTMP.find(_trans, callback_rtmp):
                         # 依次打印网络层、传输层头部
-                        print(_mac)
-                        print(_net)
-                        print(_trans)
+                        print(_packet.head)
+                        # print(_net)
+                        #print(_trans)
+                        pass
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = "mengdj@outlook.com"
 from pcap.proc.tcp_build import OnlyId
-from pcap.proc.util import AppProcData, BytesBuffer
+from pcap.proc.util import AppProcData, BytesBuffer, _CData
 
 RTMP_CLIENT = 0x00
 RTMP_SERVER = 0x01
@@ -10,9 +10,14 @@ RTMP_VERSION = 0x03
 RTMP_PORT = 1935
 
 
-class RTMP_Chunk_Basic_Head(object):
-    __fmt = 0
-    __cs_id = 0
+class RTMP_Chunk_Basic_Head(_CData):
+    __hdr__ = (
+        ('fmt', 'I', 0),
+        ('cs_id', 'I', 0),
+    )
+
+    def __init__(self, data):
+        self.fmt = data
 
 
 class RTMP_Chunk_Msg_Head(object):
@@ -28,8 +33,16 @@ class RTMP_Chunk_Data(object):
 
 
 class RTMP_Chunk(object):
+    __bh = None
+
     def __init__(self, data):
-        pass
+        size = len(data)
+        self.__bh = RTMP_Chunk_Basic_Head(data[0])
+        data, size = data[1:], size - 1
+
+    @property
+    def basic_head(self):
+        return self.__bh
 
 
 class RTMP(AppProcData):
@@ -38,6 +51,7 @@ class RTMP(AppProcData):
         参考文档:https://www.cnblogs.com/android-blogs/p/5650771.html
     """
     c0 = None
+    handshake = False
     _c1 = None
     _c2 = None
     s0 = None
@@ -76,10 +90,6 @@ class RTMP(AppProcData):
         :param fr:      调用来源    RTMP_CLIENT|RTMP_SERVER
         :return:        None
         """
-        if len(self._buff) > 0:
-            self._buff.write(data)
-            data = self._buff.getvalue()
-            self._buff.clear()
         self._chunk = RTMP_Chunk(data)
         return self.__fn(self, self._chunk, fr)
 
@@ -98,7 +108,6 @@ class RTMP(AppProcData):
             # 4元祖确定连接
             only_id = OnlyId.build(tcp.upper.src, tcp.upper.dst, tcp.src, tcp.dst)
             if tcp.dst == RTMP_PORT:
-                # client
                 if only_id not in RTMP.__prev_rtmp:
                     # 每一个链路触发一个对象
                     ins = RTMP()
@@ -106,8 +115,7 @@ class RTMP(AppProcData):
                     if data[0] == RTMP_VERSION:
                         ins.c0 = data[0]
                         ins.__fn(ins, "C0", RTMP_CLIENT)
-                        data = data[1:]
-                        size -= 1
+                        size, data = size - 1, data[1:]
                         # 剩下最大值mss也不够1536
                         if size > 0:
                             ins._c1.write(data)
@@ -118,29 +126,32 @@ class RTMP(AppProcData):
                     if c1_size == 1536:
                         c2_size = len(tmp._c2)
                         if c2_size == 1536:
-                            # 握手完成，处理数据
                             tmp._process(data, RTMP_CLIENT)
                         else:
                             last_c2size = 1536 - c2_size
-                            tmp._c2.write(data[:last_c2size])
-                            data = data[last_c2size:]
-                            size -= last_c2size
+                            if last_c2size >= size:
+                                tmp._c2.write(data[:size])
+                                data = data[size:]
+                            else:
+                                tmp._c2.write(data[:(size - last_c2size)])
+                                size = size - last_c2size
+                                data = data[size:]
                             if len(tmp._c2) == 1536:
-                                # 写入c1
-                                tmp.__fn(tmp, "C2", RTMP_CLIENT)
-                            if last_c2size > 0:
                                 # 写入c2
-                                tmp._c2.write(data)
+                                tmp.handshake = True
+                                tmp.__fn(tmp, "C2", RTMP_CLIENT)
+                                assert len(data) == 0
                     else:
                         last_c1size = 1536 - c1_size
-                        tmp._c1.write(data[:last_c1size])
-                        data = data[last_c1size:]
-                        size -= last_c1size
+                        if last_c1size >= size:
+                            tmp._c1.write(data[:size])
+                            data = data[size:]
+                        else:
+                            tmp._c1.write(data[:last_c1size])
+                            data = data[last_c1size:]
                         if len(tmp._c1) == 1536:
-                            # 写入c1
-                            tmp.__fn(tmp, "C1", RTMP_CLIENT)
-                        if size > 0:
-                            # 写入c2
+                            tmp.__fn(tmp, "C1", RTMP_SERVER)
+                        if len(data) > 0:
                             tmp._c2.write(data)
             elif tcp.src == RTMP_PORT:
                 # server
@@ -166,25 +177,28 @@ class RTMP(AppProcData):
                             tmp._process(data, RTMP_SERVER)
                         else:
                             last_s2size = 1536 - s2_size
-                            tmp._s2.write(data[:last_s2size])
-                            data = data[last_s2size:]
-                            size -= last_s2size
+                            if last_s2size >= size:
+                                tmp._s2.write(data[:size])
+                                data = data[size:]
+                            else:
+                                tmp._s2.write(data[:(size - last_s2size)])
+                                data = data[size - last_s2size:]
                             if len(tmp._s2) == 1536:
-                                # 写入c1
-                                tmp.__fn(tmp, "S2", RTMP_SERVER)
-                            if last_s2size > 0:
                                 # 写入c2
-                                tmp._s2.write(data)
+                                tmp.__fn(tmp, "S2", RTMP_SERVER)
+                                assert len(data) == 0
                     else:
                         last_s1size = 1536 - s1_size
-                        tmp._s1.write(data[:last_s1size])
-                        data = data[last_s1size:]
-                        size -= last_s1size
+                        if last_s1size >= size:
+                            tmp._s1.write(data[:size])
+                            data = data[size:]
+                        else:
+                            tmp._s1.write(data[:last_s1size])
+                            data = data[last_s1size:]
                         if len(tmp._s1) == 1536:
                             # 写入s1
                             tmp.__fn(tmp, "S1", RTMP_SERVER)
-                        if size > 0:
-                            # 写入s2
+                        if len(data) > 0:
                             tmp._s2.write(data)
             else:
                 return False
