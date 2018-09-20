@@ -10,10 +10,21 @@ RTMP_VERSION = 0x03
 RTMP_PORT = 1935
 
 
-class RTMP_c1s1(_CData):
+class _RTMP_c1s1(_CData):
     __hdr__ = (
         ('time', 'I', 0),
         ('zero', 'I', 0),
+        ('random', '1528B', 0)
+    )
+
+    def __init__(self, data):
+        self.unpack(data)
+
+
+class _RTMP_c2s2(_CData):
+    __hdr__ = (
+        ('time', 'I', 0),
+        ('time_ii', 'I', 0),
         ('random', '1528B', 0)
     )
 
@@ -62,7 +73,6 @@ class RTMP(AppProcData):
         参考文档:https://www.cnblogs.com/android-blogs/p/5650771.html
     """
     c0 = None
-    handshake = False
     _c1 = None
     _c2 = None
     s0 = None
@@ -92,21 +102,24 @@ class RTMP(AppProcData):
 
     @property
     def c1(self):
-        return RTMP_c1s1(self._c1.getvalue())
+        return _RTMP_c1s1(self._c1.getvalue())
 
     @property
     def s1(self):
-        return RTMP_c1s1(self._s1.getvalue())
+        return _RTMP_c1s1(self._s1.getvalue())
 
     def _process(self, data, fr=0):
-        """
-        解析thunk信息
-        :param data:    元数据
-        :param fr:      调用来源    RTMP_CLIENT|RTMP_SERVER
-        :return:        None
-        """
         self._chunk = RTMP_Chunk(data)
         return self.__fn(self, self._chunk, fr)
+
+    def _except_c2s2(self, fr):
+        """特别处理rtmp握手过程中在c2s2中包含控制信息的数据(1536随机数据中)"""
+        if fr == RTMP_CLIENT:
+            print([hex(i) for i in self._c2.getvalue()])
+            pass
+        elif fr == RTMP_SERVER:
+            pass
+        pass
 
     @staticmethod
     def find(tcp, fn):
@@ -153,7 +166,7 @@ class RTMP(AppProcData):
                                 data = data[size:]
                             if len(tmp._c2) == 1536:
                                 # 写入c2
-                                tmp.handshake = True
+                                tmp._except_c2s2(RTMP_CLIENT)
                                 tmp.__fn(tmp, "C2", RTMP_CLIENT)
                                 assert len(data) == 0
                     else:
@@ -200,6 +213,7 @@ class RTMP(AppProcData):
                                 data = data[size - last_s2size:]
                             if len(tmp._s2) == 1536:
                                 # 写入c2
+                                tmp._except_c2s2(RTMP_SERVER)
                                 tmp.__fn(tmp, "S2", RTMP_SERVER)
                                 assert len(data) == 0
                     else:

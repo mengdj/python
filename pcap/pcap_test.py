@@ -10,8 +10,8 @@ from pcap.proc.rtmp import RTMP
 def callback_rtmp(ins, msg, fr):
     if msg.__class__.__name__ == "str":
         print(msg)
-        if msg == "C1":
-            print("time:%d zero:%d" % (ins.c1.time, ins.c1.zero))
+        if msg=="S1":
+            print("s1 time:%d"%(ins.s1.time))
 
 
 class PcapTest(unittest.TestCase):
@@ -29,20 +29,13 @@ class PcapTest(unittest.TestCase):
             _net = _mac.data
             _trans = _net.data
             if _trans.__class__.__name__ == "TCP":
-                # 打印tcp的选项数据
-                # print(_trans.option)
-
                 _app = _trans.data
-                if _packet.head.usec == 525657:
-                    print([hex(i) for i in _app])
-
                 if _app is not None:
+                    print(_packet.head)
+                    print(_trans)
                     if RTMP.find(_trans, callback_rtmp):
                         # 依次打印网络层、传输层头部
-                        print(_packet.head)
-                        # print(_net)
-                        # print(_trans)
-                        pass
+                        print("")
 
 
 if __name__ == "__main__":
