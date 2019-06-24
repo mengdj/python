@@ -6,7 +6,8 @@ import time
 import csv
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from pyquery import PyQuery as pq
+from io import StringIO
+from lxml import etree
 """
 西祠代理IP
 """
@@ -55,11 +56,12 @@ class Proxy(object):
         """
         assert protocol != '' and num != 0
         protocol_lower = protocol.lower()
-        url = '://'.join((protocol_lower,self._proxy_site))
+        url = '://'.join((protocol_lower, self._proxy_site))
         ret = []
         with requests.session() as session:
             session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0'
             session.headers['Accept-Language'] = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2"
+            session.keep_alive = True
             prev = prev + 1 if prev > 0 else 0
             for ip in self._xici_target_list[prev:]:
                 if protocol == ip['PROTOCOL']:
@@ -81,32 +83,39 @@ class Proxy(object):
         :return:
         """
         if (os.path.exists(self._file) is False) or (int(time.time()) - int(os.path.getmtime(self._file)) >= 3600):
-            with open(self._file, 'w', newline='') as o:
-                writer = csv.writer(o)
-                with requests.session() as session:
-                    session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0'
-                    session.headers['Accept-Language'] = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2"
-                    csv_data = []
-                    for p in self._xici_url_list:
-                        resp = session.get(p, verify=False)
-                        if resp.reason == 'OK' and resp.text != '':
-                            doc = pq(resp.text)
-                            items = doc('#ip_list').items("tr")
-                            i = 0
-                            for item in items:
-                                csv_data.clear()
-                                if i != 0:
-                                    tdis = item.items("td")
-                                    # 列 顺序
-                                    ii = 0
-                                    for tdi in tdis:
-                                        if ii in (1, 2, 3, 4, 5, 9):
-                                            csv_data.append(tdi.text())
-                                        ii += 1
-                                    self._xici_target_list.append({'INDEX': i - 1, 'IP': csv_data[0], 'PORT': int(csv_data[1]),'PROTOCOL': csv_data[4]})
-                                    writer.writerow(csv_data)
-                                i += 1
-                        resp.close()
+            wb = StringIO()
+            writer = csv.writer(wb)
+            with requests.session() as session:
+                session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0'
+                session.headers['Accept-Language'] = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2"
+                csv_data = []
+                i = 0
+                for p in self._xici_url_list:
+                    resp = session.get(p, verify=False)
+                    if resp.reason == 'OK' and resp.text != '':
+                        doc = etree.HTML(resp.text)
+                        items = doc.xpath(r'//table[@id="ip_list"]/tr[position()>2]')
+                        for item in items:
+                            csv_data.clear()
+                            tdis = item.xpath('td')
+                            ii = 0
+                            for tdi in tdis:
+                                if ii in (1, 2, 3, 4, 5, 9):
+                                    if ii == 3:
+                                        tmp_a = tdi.find('a')
+                                        if tmp_a is not None:
+                                            csv_data.append(tmp_a.text)
+                                        else:
+                                            csv_data.append('')
+                                    else:
+                                        csv_data.append(tdi.text)
+                                ii += 1
+                            self._xici_target_list.append({'INDEX': i, 'IP': csv_data[0], 'PORT': int(csv_data[1]), 'PROTOCOL': csv_data[4]})
+                            writer.writerow(csv_data)
+                            i += 1
+                # 写入文件
+                if wb.getvalue():
+                    with open(self._file, 'w', newline='') as w: w.write(wb.getvalue())
         if not self._xici_target_list:
             with open(self._file, 'r', newline='') as o:
                 reader = csv.reader(o)
@@ -115,3 +124,4 @@ class Proxy(object):
                     self._xici_target_list.append({'INDEX': i, 'IP': row[0], 'PORT': int(row[1]), 'PROTOCOL': row[4]})
                     i += 1
         return len(self._xici_target_list) != 0
+# End Of File proxy.py
