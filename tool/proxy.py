@@ -94,7 +94,7 @@ class Proxy(object):
                     resp = session.get(p, verify=False)
                     if resp.reason == 'OK' and resp.text != '':
                         doc = etree.HTML(resp.text)
-                        items = doc.xpath(r'//table[@id="ip_list"]/tr[position()>2]')
+                        items = doc.xpath(r'//table[@id="ip_list"]/tr[position()>1]')
                         for item in items:
                             csv_data.clear()
                             tdis = item.xpath('td')
