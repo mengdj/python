@@ -10,6 +10,7 @@ from lxml import etree
 import asyncio
 import urllib3
 from concurrent.futures import ThreadPoolExecutor
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 """
 西祠代理IP
@@ -24,8 +25,7 @@ class Proxy(object):
         :param start:       起步页1
         :param stop:        终止页2
         """
-        self._xici_url_list = ('https://www.xicidaili.com' + t + (str(p) if p > 1 else '') for t in
-                               ('/nn/', '/nt/', '/wn/', '/wt/') for p in range(start, stop))
+        self._xici_url_list = ('https://www.xicidaili.com' + t + (str(p) if p > 1 else '') for t in('/nn/', '/nt/', '/wn/', '/wt/') for p in range(start, stop))
         self._xici_target_list = []
         self._proxy_site = site
         self._file = 'proxy.csv'
@@ -71,18 +71,27 @@ class Proxy(object):
         ret = None
         if not self._proxy[protocol]:
             with ThreadPoolExecutor() as executor:
-                task_ready = (self._loop_env.run_in_executor(executor, self._proxy_get, url, num, timeout,self._proxy[protocol], ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol and ip['INDEX'] > prev)
+                task_ready = (
+                    self._loop_env.run_in_executor(executor, self._proxy_get, url, timeout, self._proxy[protocol], ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol and ip['INDEX'] > prev)
                 self._loop_env.run_until_complete(asyncio.gather(*task_ready))
             ret = self._proxy[protocol]
         else:
-            ret=[p for p in self._proxy[protocol] if p['INDEX'] > prev]
+            ret = [p for p in self._proxy[protocol] if p['INDEX'] > prev]
         return ret[:num] if num <= len(ret) else ret
 
-    def _proxy_get(self, url, num, timeout, proxy, ip):
+    def _proxy_get(self, url, timeout, proxy, ip):
+        """
+        测试能否请求到
+        :param url:         请求地址
+        :param timeout:     超时
+        :param proxy:       代理实例
+        :param ip:          待校验代理数据
+        :return:
+        """
         protocol_lower = str(ip['PROTOCOL']).lower()
         proxy_data = {protocol_lower: r'%s://%s:%d/' % (protocol_lower, ip['IP'], ip['PORT'])}
         try:
-            resp = requests.get(url, headers=self._headers, proxies=proxy_data, timeout=timeout, stream=True)
+            resp = requests.head(url, headers=self._headers, proxies=proxy_data, timeout=timeout)
             if resp.reason == 'OK':
                 ip['PROXY'] = proxy_data
                 proxy.append(ip)
@@ -123,7 +132,8 @@ class Proxy(object):
                                     else:
                                         csv_data.append(tdi.text)
                                 ii += 1
-                            self._xici_target_list.append({'INDEX': i, 'IP': csv_data[0], 'PORT': int(csv_data[1]), 'PROTOCOL': csv_data[4]})
+                            self._xici_target_list.append(
+                                {'INDEX': i, 'IP': csv_data[0], 'PORT': int(csv_data[1]), 'PROTOCOL': csv_data[4]})
                             writer.writerow(csv_data)
                             i += 1
                 # 写入文件
