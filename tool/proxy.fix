@@ -9,7 +9,7 @@ from io import StringIO
 from lxml import etree
 import asyncio
 import urllib3
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor,as_completed
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 """
@@ -71,8 +71,7 @@ class Proxy(object):
         ret = None
         if not self._proxy[protocol]:
             with ThreadPoolExecutor() as executor:
-                task_ready = (
-                    self._loop_env.run_in_executor(executor, self._proxy_get, url, timeout, self._proxy[protocol], ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol and ip['INDEX'] > prev)
+                task_ready = (self._loop_env.run_in_executor(executor, self._proxy_get, url, timeout, self._proxy[protocol], ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol and ip['INDEX'] > prev)
                 self._loop_env.run_until_complete(asyncio.gather(*task_ready))
             ret = self._proxy[protocol]
         else:
@@ -104,7 +103,7 @@ class Proxy(object):
         请求代理数据（使用了西祠代理）
         :return:
         """
-        if (os.path.exists(self._file) is False) or (int(time.time()) - int(os.path.getmtime(self._file)) >= 3600):
+        if (os.path.exists(self._file) is False) or (int(time.time()) - int(os.path.getmtime(self._file)) >= 1800):
             wb = StringIO()
             writer = csv.writer(wb)
             with requests.session() as session:
@@ -112,8 +111,12 @@ class Proxy(object):
                 session.headers['Accept-Language'] = "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2"
                 csv_data = []
                 i = 0
-                for p in self._xici_url_list:
-                    resp = session.get(p, verify=False)
+                tasks = (self._yield_get(session, url) for url in self._xici_url_list)
+                tasks_result = None
+                with ThreadPoolExecutor() as executor:
+                    tasks_result = [executor.submit(lambda p: p.send(None), i) for i in tasks]
+                for future in as_completed(tasks_result):
+                    resp=future.result()
                     if resp.reason == 'OK' and resp.text != '':
                         doc = etree.HTML(resp.text)
                         items = doc.xpath(r'//table[@id="ip_list"]/tr[position()>1]')
@@ -132,8 +135,7 @@ class Proxy(object):
                                     else:
                                         csv_data.append(tdi.text)
                                 ii += 1
-                            self._xici_target_list.append(
-                                {'INDEX': i, 'IP': csv_data[0], 'PORT': int(csv_data[1]), 'PROTOCOL': csv_data[4]})
+                            self._xici_target_list.append({'INDEX': i, 'IP': csv_data[0], 'PORT': int(csv_data[1]), 'PROTOCOL': csv_data[4]})
                             writer.writerow(csv_data)
                             i += 1
                 # 写入文件
@@ -147,4 +149,13 @@ class Proxy(object):
                     self._xici_target_list.append({'INDEX': i, 'IP': row[0], 'PORT': int(row[1]), 'PROTOCOL': row[4]})
                     i += 1
         return len(self._xici_target_list) != 0
+
+    def _yield_get(self, session, url, **kwargs):
+        """
+        :param session:
+        :param url:
+        :param kwargs:
+        :return:
+        """
+        yield session.get(url, **kwargs)
 # End Of File proxy.py
