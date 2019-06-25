@@ -10,7 +10,6 @@ from lxml import etree
 import asyncio
 import urllib3
 from concurrent.futures import ThreadPoolExecutor
-from threading import Lock
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 """
 西祠代理IP
@@ -35,7 +34,7 @@ class Proxy(object):
             'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2'
         }
         self._loop_env = asyncio.get_event_loop()
-        self._lock = Lock()
+        self._proxy = {'HTTP': [], 'HTTPS': []}
         if self._validate_data() is False:
             raise Exception('can\'t found proxy source data')
 
@@ -66,29 +65,30 @@ class Proxy(object):
         :param prev:        上一个可用索引（无需设置，仅供迭代器）
         :return:
         """
-        assert protocol != '' and num != 0
-        ret = []
+        assert protocol != '' and num >= 1
         url = '://'.join((protocol.lower(), self._proxy_site))
         prev = prev + 1 if prev > 0 else 0
-        with ThreadPoolExecutor() as executor:
-            task_ready = (self._loop_env.run_in_executor(executor, self._proxy_get, url, num, timeout, ret, ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol)
-            self._loop_env.run_until_complete(asyncio.gather(*task_ready))
-        return ret
+        ret = None
+        if not self._proxy[protocol]:
+            with ThreadPoolExecutor() as executor:
+                task_ready = (self._loop_env.run_in_executor(executor, self._proxy_get, url, num, timeout,self._proxy[protocol], ip) for ip in self._xici_target_list[prev:] if ip['PROTOCOL'] == protocol and ip['INDEX'] > prev)
+                self._loop_env.run_until_complete(asyncio.gather(*task_ready))
+            ret = self._proxy[protocol]
+        else:
+            ret=[p for p in self._proxy[protocol] if p['INDEX'] > prev]
+        return ret[:num] if num <= len(ret) else ret
 
     def _proxy_get(self, url, num, timeout, proxy, ip):
-        proxy_size = len(proxy)
-        if proxy_size < num:
-            protocol_lower = str(ip['PROTOCOL']).lower()
-            proxy_data = {protocol_lower: r'%s://%s:%d/' % (protocol_lower, ip['IP'], ip['PORT'])}
-            try:
-                resp = requests.get(url, headers=self._headers, proxies=proxy_data, timeout=timeout, stream=True)
-                if resp.reason == 'OK':
-                    ip['PROXY']=proxy_data
-                    proxy.append(ip)
-                    proxy_size += 1
-            except Exception as e:
-                pass
-        return proxy_size
+        protocol_lower = str(ip['PROTOCOL']).lower()
+        proxy_data = {protocol_lower: r'%s://%s:%d/' % (protocol_lower, ip['IP'], ip['PORT'])}
+        try:
+            resp = requests.get(url, headers=self._headers, proxies=proxy_data, timeout=timeout, stream=True)
+            if resp.reason == 'OK':
+                ip['PROXY'] = proxy_data
+                proxy.append(ip)
+        except Exception as e:
+            pass
+        return len(proxy)
 
     def _validate_data(self):
         """
