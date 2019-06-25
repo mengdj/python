@@ -67,7 +67,7 @@ class Proxy(object):
                 if protocol == ip['PROTOCOL']:
                     proxy_data = {protocol_lower: r'%s://%s:%d/' % (protocol_lower, ip['IP'], ip['PORT'])}
                     try:
-                        resp = session.get(url, proxies=proxy_data, timeout=timeout, verify=False, stream=True)
+                        resp = session.head(url, proxies=proxy_data, timeout=timeout, verify=False)
                         if resp.reason == 'OK':
                             ret.append({'INDEX': ip['INDEX'], 'IP': ip['IP'], 'PORT': ip['PORT'], 'PROTOCOL': ip['PROTOCOL'],'PROXY': proxy_data})
                             if len(ret) == num:
